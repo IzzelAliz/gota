@@ -88,6 +88,7 @@ func (e boolElements) Elem(i int) Element { return &e[i] }
 type ElementValue interface{}
 
 type MapFunction func(Element) Element
+type MapAsFunction func(Element) interface{}
 
 // Comparator is a convenience alias that can be used for a more type safe way of
 // reason and use comparators.
@@ -123,11 +124,11 @@ const (
 // Indexes represent the elements that can be used for selecting a subset of
 // elements within a Series. Currently supported are:
 //
-//     int            // Matches the given index number
-//     []int          // Matches all given index numbers
-//     []bool         // Matches all elements in a Series marked as true
-//     Series [Int]   // Same as []int
-//     Series [Bool]  // Same as []bool
+//	int            // Matches the given index number
+//	[]int          // Matches all given index numbers
+//	[]bool         // Matches all elements in a Series marked as true
+//	Series [Int]   // Same as []int
+//	Series [Bool]  // Same as []bool
 type Indexes interface{}
 
 // New is the generic Series constructor
@@ -211,6 +212,39 @@ func New(values interface{}, t Type, name string) Series {
 	return ret
 }
 
+func Lit(val any, len int) Series {
+	switch v := val.(type) {
+	case string:
+		strs := make([]string, len)
+		for i := range strs {
+			strs[i] = v
+		}
+		return New(strs, String, fmt.Sprintf("Lit(%v)", v))
+	case int:
+		ints := make([]int, len)
+		for i := range ints {
+			ints[i] = v
+		}
+		return New(ints, Int, fmt.Sprintf("Lit(%v)", v))
+	case float64:
+		floats := make([]float64, len)
+		for i := range floats {
+			floats[i] = v
+		}
+		return New(floats, Float, fmt.Sprintf("Lit(%v)", v))
+	case bool:
+		bools := make([]bool, len)
+		for i := range bools {
+			bools[i] = v
+		}
+		return New(bools, Bool, fmt.Sprintf("Lit(%v)", v))
+	default:
+		s := New([]int{}, Int, fmt.Sprintf("Lit(%v)", val))
+		s.Err = fmt.Errorf("unknown lit value: %v", val)
+		return s
+	}
+}
+
 // Strings is a constructor for a String Series
 func Strings(values interface{}) Series {
 	return New(values, String, "")
@@ -234,6 +268,16 @@ func Bools(values interface{}) Series {
 // Empty returns an empty Series of the same type
 func (s Series) Empty() Series {
 	return New([]int{}, s.t, s.Name)
+}
+
+// As returns a new Series with given name
+func (s Series) As(name string) Series {
+	return Series{
+		Name:     name,
+		elements: s.elements,
+		t:        s.t,
+		Err:      s.Err,
+	}
 }
 
 // Returns Error or nil if no error occured
@@ -805,6 +849,18 @@ func (s Series) Map(f MapFunction) Series {
 		mappedValues[i] = value
 	}
 	return New(mappedValues, s.Type(), s.Name)
+}
+
+// MapAs applies a function matching MapFunction signature, which itself
+// allowing for a fairly flexible MAP implementation, intended for mapping
+// the function over each element in Series and returning a new Series object.
+func (s Series) MapAs(t Type, f MapAsFunction) Series {
+	mappedValues := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		value := f(s.elements.Elem(i))
+		mappedValues[i] = value
+	}
+	return New(mappedValues, t, s.Name)
 }
 
 // Sum calculates the sum value of a series

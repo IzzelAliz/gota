@@ -2985,6 +2985,28 @@ func TestDataFrame_Aggregation(t *testing.T) {
 	}
 }
 
+func TestDataFrame_Agg(t *testing.T) {
+	a := New(
+		series.New([]string{"b", "a", "b", "a", "b"}, series.String, "key1"),
+		series.New([]int{1, 2, 1, 2, 2}, series.Int, "key2"),
+		series.New([]float64{3.0, 4.0, 5.3, 3.2, 1.2}, series.Float, "values"),
+		series.New([]float64{3.0, 4.0, 5.3, 3.2, 1.2}, series.Float, "values2"),
+	)
+	groups := a.GroupBy("key1", "key2")
+	df := groups.Agg([]string{"values_MAX"},
+		NewAgg("values", series.Aggregation_Max))
+	resultMap := make(map[string]float32, 3)
+	resultMap[fmt.Sprintf("%s_%d", "a", 2)] = 4
+	resultMap[fmt.Sprintf("%s_%d", "b", 1)] = 5.3
+	resultMap[fmt.Sprintf("%s_%d", "b", 2)] = 1.2
+	for _, m := range df.Maps() {
+		key := fmt.Sprintf("%s_%d", m["key1"], m["key2"])
+		if !IsEqual(m["values_MAX"].(float64), float64(resultMap[key])) {
+			t.Errorf("Aggregation: expect %f , but got %f", float64(resultMap[key]), m["values"].(float64))
+		}
+	}
+}
+
 func TestGroups_GetGroups(t *testing.T) {
 	a := New(
 		series.New([]string{"b", "a", "b", "a", "b"}, series.String, "key1"),
