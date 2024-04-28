@@ -6,198 +6,175 @@ import (
 	"gonum.org/v1/gonum/floats"
 )
 
-func (s Series) AddVal(val float64) Series {
+func (s Series) Add(val interface{}) Series {
+	switch v := val.(type) {
+	case int:
+		return s.addVal(float64(v))
+	case float64:
+		return s.addVal(v)
+	case Series:
+		return s.addCol(v)
+	default:
+		return s.errorf("unknown add type: %T", val)
+	}
+}
+
+func (s Series) addVal(val float64) Series {
 	return s.Copy().Map(func(e Element) Element {
 		e.Set(e.Float() + val)
 		return e
 	})
 }
 
-func (s Series) Add(other Series) Series {
+func (s Series) addCol(other Series) Series {
 	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
+		return s.errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
 	}
 	if s.Type() == Int && other.Type() == Int {
 		a, _ := s.Int()
 		b, _ := other.Int()
-		return New(addToInt(make([]int, s.Len()), a, b), Int, s.Name+"+"+other.Name)
+		for i := range a {
+			a[i] = a[i] + b[i]
+		}
+		return New(a, Int, s.Name+"+"+other.Name)
 	} else {
 		return New(floats.AddTo(make([]float64, s.Len()), s.Float(), other.Float()), Float, s.Name+"+"+other.Name)
 	}
 }
 
-func addToInt(dst, a, b []int) []int {
-	for i := range dst {
-		dst[i] = a[i] + b[i]
+func (s Series) Sub(val interface{}) Series {
+	switch v := val.(type) {
+	case int:
+		return s.subVal(float64(v))
+	case float64:
+		return s.subVal(v)
+	case Series:
+		return s.subCol(v)
+	default:
+		return s.errorf("unknown sub type: %T", val)
 	}
-	return dst
 }
 
-func (s Series) SubVal(val float64) Series {
+func (s Series) subVal(val float64) Series {
 	return s.Copy().Map(func(e Element) Element {
 		e.Set(e.Float() - val)
 		return e
 	})
 }
 
-func (s Series) Sub(other Series) Series {
+func (s Series) subCol(other Series) Series {
 	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
+		return s.errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
 	}
 	if s.Type() == Int && other.Type() == Int {
 		a, _ := s.Int()
 		b, _ := other.Int()
-		return New(subToInt(make([]int, s.Len()), a, b), Int, s.Name+"-"+other.Name)
+		for i := range a {
+			a[i] = a[i] - b[i]
+		}
+		return New(a, Int, s.Name+"-"+other.Name)
 	} else {
 		return New(floats.SubTo(make([]float64, s.Len()), s.Float(), other.Float()), Float, s.Name+"-"+other.Name)
 	}
 }
 
-func subToInt(dst, a, b []int) []int {
-	for i := range dst {
-		dst[i] = a[i] - b[i]
+func (s Series) Mul(val interface{}) Series {
+	switch v := val.(type) {
+	case int:
+		return s.mulVal(float64(v))
+	case float64:
+		return s.mulVal(v)
+	case Series:
+		return s.mulCol(v)
+	default:
+		return s.errorf("unknown mul type: %T", val)
 	}
-	return dst
 }
 
-func (s Series) MulVal(val float64) Series {
+func (s Series) mulVal(val float64) Series {
 	return s.Copy().Map(func(e Element) Element {
 		e.Set(e.Float() * val)
 		return e
 	})
 }
 
-func (s Series) Mul(other Series) Series {
+func (s Series) mulCol(other Series) Series {
 	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
+		return s.errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
 	}
 	if s.Type() == Int && other.Type() == Int {
 		a, _ := s.Int()
 		b, _ := other.Int()
-		return New(mulToInt(make([]int, s.Len()), a, b), Int, s.Name+"*"+other.Name)
+		for i := range a {
+			a[i] = a[i] * b[i]
+		}
+		return New(a, Int, s.Name+"*"+other.Name)
 	} else {
 		return New(floats.MulTo(make([]float64, s.Len()), s.Float(), other.Float()), Float, s.Name+"*"+other.Name)
 	}
 }
-
-func mulToInt(dst, a, b []int) []int {
-	for i := range dst {
-		dst[i] = a[i] * b[i]
+func (s Series) Div(val interface{}) Series {
+	switch v := val.(type) {
+	case int:
+		return s.divVal(float64(v))
+	case float64:
+		return s.divVal(v)
+	case Series:
+		return s.divCol(v)
+	default:
+		return s.errorf("unknown mul type: %T", val)
 	}
-	return dst
 }
 
-func (s Series) DivVal(val float64) Series {
+func (s Series) divVal(val float64) Series {
 	return s.Copy().Map(func(e Element) Element {
 		e.Set(e.Float() / val)
 		return e
 	})
 }
 
-func (s Series) Div(other Series) Series {
+func (s Series) divCol(other Series) Series {
 	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
+		return s.errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
 	}
 	if s.Type() == Int && other.Type() == Int {
 		a, _ := s.Int()
 		b, _ := other.Int()
-		return New(divToInt(make([]int, s.Len()), a, b), Int, s.Name+"/"+other.Name)
+		for i := range a {
+			a[i] = a[i] / b[i]
+		}
+		return New(a, Int, s.Name+"/"+other.Name)
 	} else {
 		return New(floats.DivTo(make([]float64, s.Len()), s.Float(), other.Float()), Float, s.Name+"/"+other.Name)
 	}
 }
 
-func divToInt(dst, a, b []int) []int {
-	for i := range dst {
-		dst[i] = a[i] / b[i]
-	}
-	return dst
+func (s Series) Eq(val interface{}) Series {
+	return s.Compare(Eq, val)
 }
 
-func (s Series) Eq(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+"=="+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).Eq(other.Elem(i)))
-	}
-	return r
+func (s Series) Neq(val interface{}) Series {
+	return s.Compare(Neq, val)
 }
 
-func (s Series) Neq(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+"!="+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).Neq(other.Elem(i)))
-	}
-	return r
+func (s Series) Greater(val interface{}) Series {
+	return s.Compare(Greater, val)
 }
 
-func (s Series) Greater(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+">"+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).Greater(other.Elem(i)))
-	}
-	return r
+func (s Series) GreaterEq(val interface{}) Series {
+	return s.Compare(GreaterEq, val)
 }
 
-func (s Series) GreaterEq(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+">="+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).GreaterEq(other.Elem(i)))
-	}
-	return r
+func (s Series) Less(val interface{}) Series {
+	return s.Compare(Less, val)
 }
 
-func (s Series) Less(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+"<"+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).Less(other.Elem(i)))
-	}
-	return r
+func (s Series) LessEq(val interface{}) Series {
+	return s.Compare(LessEq, val)
 }
 
-func (s Series) LessEq(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	r := New(make([]bool, s.Len()), Bool, s.Name+"<="+other.Name)
-	for i := 0; i < s.Len(); i++ {
-		r.Elem(i).Set(s.Elem(i).LessEq(other.Elem(i)))
-	}
-	return r
+func (s Series) In(val interface{}) Series {
+	return s.Compare(In, val)
 }
 
 func (s Series) Cast(t Type) Series {
@@ -238,61 +215,29 @@ func (s Series) ZeroNA(t Type) Series {
 }
 
 func (s Series) And(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	if s.t != Bool || other.t != Bool {
-		r := s.Empty()
-		r.Err = fmt.Errorf("type is not bool: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	a, err := s.Bool()
-	if err != nil {
-		r := s.Empty()
-		r.Err = err
-		return r
-	}
-	b, err := other.Bool()
-	if err != nil {
-		r := s.Empty()
-		r.Err = err
-		return r
-	}
-	result := make([]bool, s.Len())
-	for i := range result {
-		result[i] = a[i] && b[i]
-	}
-	return New(result, Bool, fmt.Sprintf("(%v && %v)", s.Name, other.Name))
+	return s.Zip(other, Bool, func(a, b Element) interface{} {
+		ba, err := a.Bool()
+		if err != nil {
+			return nil
+		}
+		bb, err := b.Bool()
+		if err != nil {
+			return nil
+		}
+		return ba && bb
+	}).As(fmt.Sprintf("(%v && %v)", s.Name, other.Name))
 }
 
 func (s Series) Or(other Series) Series {
-	if s.Len() != other.Len() {
-		r := s.Empty()
-		r.Err = fmt.Errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	if s.t != Bool || other.t != Bool {
-		r := s.Empty()
-		r.Err = fmt.Errorf("type is not bool: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
-		return r
-	}
-	a, err := s.Bool()
-	if err != nil {
-		r := s.Empty()
-		r.Err = err
-		return r
-	}
-	b, err := other.Bool()
-	if err != nil {
-		r := s.Empty()
-		r.Err = err
-		return r
-	}
-	result := make([]bool, s.Len())
-	for i := range result {
-		result[i] = a[i] || b[i]
-	}
-	return New(result, Bool, fmt.Sprintf("(%v || %v)", s.Name, other.Name))
+	return s.Zip(other, Bool, func(a, b Element) interface{} {
+		ba, err := a.Bool()
+		if err != nil {
+			return nil
+		}
+		bb, err := b.Bool()
+		if err != nil {
+			return nil
+		}
+		return ba || bb
+	}).As(fmt.Sprintf("(%v || %v)", s.Name, other.Name))
 }

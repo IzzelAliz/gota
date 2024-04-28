@@ -695,8 +695,38 @@ func (df DataFrame) Concat(dfb DataFrame) DataFrame {
 
 // With changes a column of the DataFrame with the given Series or adds it as
 // a new column if the column name does not exist.
-func (df DataFrame) With(s series.Series) DataFrame {
-	return df.Mutate(s)
+func (df DataFrame) With(ss ...series.Series) DataFrame {
+	if df.Err != nil {
+		return df
+	}
+	df = df.Copy()
+	// Check that colname exist on dataframe
+	columns := df.columns
+	for _, s := range ss {
+		if s.Len() != df.nrows {
+			return DataFrame{Err: fmt.Errorf("mutate: wrong dimensions")}
+		}
+		if idx := findInStringSlice(s.Name, df.Names()); idx != -1 {
+			columns[idx] = s
+		} else {
+			columns = append(columns, s)
+		}
+	}
+	nrows, ncols, err := checkColumnsDimensions(columns...)
+	if err != nil {
+		return DataFrame{Err: err}
+	}
+	df = DataFrame{
+		columns: columns,
+		ncols:   ncols,
+		nrows:   nrows,
+	}
+	colnames := df.Names()
+	fixColnames(colnames)
+	for i, colname := range colnames {
+		df.columns[i].Name = colname
+	}
+	return df
 }
 
 // Mutate changes a column of the DataFrame with the given Series or adds it as
@@ -820,6 +850,11 @@ func (df DataFrame) FilterAggregation(agg Aggregation, filters ...F) DataFrame {
 		}
 	}
 	return df.Subset(res)
+}
+
+// Where will filter the rows of a DataFrame based on the given Series[bool].
+func (df DataFrame) Where(col series.Series) DataFrame {
+	return df.Subset(col)
 }
 
 // Order is the ordering structure

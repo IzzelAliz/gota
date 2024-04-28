@@ -20,7 +20,7 @@ func TestArith(t *testing.T) {
 		},
 		{
 			series.Ints([]int{2, 3, 4}),
-			series.Ints([]int{1, 2, 3}).AddVal(1),
+			series.Ints([]int{1, 2, 3}).Add(1),
 			"Add",
 		},
 		{
@@ -94,6 +94,16 @@ func TestMisc(t *testing.T) {
 			series.Strings([]string{"1", "2", "3"}),
 			series.Ints([]int{1, 2, 3}).MapAs(series.String, func(e series.Element) interface{} { return e.String() }),
 			"MapAs string",
+		},
+		{
+			series.Bools([]bool{true, false, false, false}),
+			series.Bools([]bool{true, true, false, false}).And(series.Bools([]bool{true, false, true, false})),
+			"And",
+		},
+		{
+			series.Bools([]bool{true, true, true, false}),
+			series.Bools([]bool{true, true, false, false}).Or(series.Bools([]bool{true, false, true, false})),
+			"Or",
 		},
 	}
 	for _, ent := range table {

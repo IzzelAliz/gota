@@ -89,6 +89,7 @@ type ElementValue interface{}
 
 type MapFunction func(Element) Element
 type MapAsFunction func(Element) interface{}
+type ZipFunction func(a Element, b Element) interface{}
 
 // Comparator is a convenience alias that can be used for a more type safe way of
 // reason and use comparators.
@@ -895,4 +896,22 @@ func (s Series) Slice(j, k int) Series {
 	}
 
 	return s.Subset(idxs)
+}
+
+// Zip merges two Series into a new Series with given function.
+func (s Series) Zip(other Series, t Type, zipF ZipFunction) Series {
+	if s.Len() != other.Len() {
+		return s.errorf("index dimensions mismatch: %s %v, %s %v", s.Name, s.Len(), other.Name, other.Len())
+	}
+	result := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		result[i] = zipF(s.Elem(i), other.Elem(i))
+	}
+	return New(result, t, "Zip")
+}
+
+func (s Series) errorf(str string, v ...interface{}) Series {
+	r := s.Empty()
+	r.Err = fmt.Errorf(str, v...)
+	return r
 }
