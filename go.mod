@@ -1,4 +1,4 @@
-module github.com/go-gota/gota
+module github.com/IzzelAliz/gota
 
 go 1.21
 

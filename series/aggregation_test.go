@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-gota/gota/series"
+	"github.com/IzzelAliz/gota/series"
 )
 
 func TestAgg(t *testing.T) {
