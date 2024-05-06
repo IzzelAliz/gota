@@ -1279,7 +1279,7 @@ func parseType(s string) (series.Type, error) {
 	switch s {
 	case "float", "float64", "float32":
 		return series.Float, nil
-	case "int", "int64", "int32", "int16", "int8":
+	case "int", "int64", "int32", "int16", "int8", "uint", "uint64", "uint32", "uint16", "uint8":
 		return series.Int, nil
 	case "string":
 		return series.String, nil

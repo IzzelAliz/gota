@@ -32,25 +32,41 @@ func (e *boolElement) Set(value interface{}) {
 			return
 		}
 	case int:
-		switch val {
-		case 1:
-			e.e = true
-		case 0:
-			e.e = false
-		default:
-			e.nan = true
-			return
-		}
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case int8:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case int16:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case int32:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case int64:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case uint:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case uint8:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case uint16:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case uint32:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case uint64:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
+	case float32:
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
 	case float64:
-		switch val {
-		case 1:
-			e.e = true
-		case 0:
-			e.e = false
-		default:
-			e.nan = true
-			return
-		}
+		e.e = val == 1
+		e.nan = val != 0 && val != 1
 	case bool:
 		e.e = val
 	case Element:

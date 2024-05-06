@@ -734,6 +734,14 @@ func TestInts(t *testing.T) {
 			"[1 2 3]",
 		},
 		{
+			Ints([]uint{1, 2, math.MaxUint64}),
+			"[1 2 NaN]",
+		},
+		{
+			Ints([]int8{1, 2, 3}),
+			"[1 2 3]",
+		},
+		{
 			Ints([]int{2}),
 			"[2]",
 		},
@@ -850,6 +858,10 @@ func TestFloats(t *testing.T) {
 			"[2.000000]",
 		},
 		{
+			Floats([]float32{2}),
+			"[2.000000]",
+		},
+		{
 			Floats(-1.0),
 			"[-1.000000]",
 		},
@@ -930,12 +942,24 @@ func TestBools(t *testing.T) {
 			"[true NaN false]",
 		},
 		{
+			Bools([]int32{1, 2, 0}),
+			"[true NaN false]",
+		},
+		{
+			Bools([]uint8{1, 2, 0}),
+			"[true NaN false]",
+		},
+		{
 			Bools([]int{1}),
 			"[true]",
 		},
 		{
 			Bools(-1),
 			"[NaN]",
+		},
+		{
+			Bools([]float32{1, 2, 0}),
+			"[true NaN false]",
 		},
 		{
 			Bools([]float64{1, 2, 0}),
