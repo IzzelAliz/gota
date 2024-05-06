@@ -2734,6 +2734,10 @@ func TestLoadStructs(t *testing.T) {
 		{"a", 1, true, 0.0},
 		{"b", 2, true, 0.5},
 	}
+	dataPointer := []*testStruct{
+		{"a", 1, true, 0.0},
+		{"b", 2, true, 0.5},
+	}
 	dataTags := []testStructTags{
 		{"a", 1, true, 0.0, 0, 0},
 		{"NA", 2, true, 0.5, 0, 0},
@@ -2749,6 +2753,15 @@ func TestLoadStructs(t *testing.T) {
 				series.New([]int{1, 2}, series.String, "b"),
 				series.New([]bool{true, true}, series.String, "c"),
 				series.New([]string{"0.000000", "0.500000"}, series.String, "d"),
+			),
+		},
+		{
+			LoadStructs(dataPointer),
+			New(
+				series.New([]string{"a", "b"}, series.String, "A"),
+				series.New([]int{1, 2}, series.Int, "B"),
+				series.New([]bool{true, true}, series.Bool, "C"),
+				series.New([]float64{0, 0.5}, series.Float, "D"),
 			),
 		},
 		{

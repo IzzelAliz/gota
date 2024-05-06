@@ -1181,22 +1181,29 @@ func LoadStructs(i interface{}, options ...LoadOption) DataFrame {
 	tpy, val := reflect.TypeOf(i), reflect.ValueOf(i)
 	switch tpy.Kind() {
 	case reflect.Slice:
-		if tpy.Elem().Kind() != reflect.Struct {
+		isPointer := false
+		if tpy.Elem().Kind() == reflect.Pointer && tpy.Elem().Elem().Kind() == reflect.Struct {
+			isPointer = true
+		} else if tpy.Elem().Kind() != reflect.Struct {
 			return DataFrame{Err: fmt.Errorf(
-				"load: type %s (%s %s) is not supported, must be []struct", tpy.Name(), tpy.Elem().Kind(), tpy.Kind())}
+				"load: type %s (%s %s) is not supported, must be []struct or []*struct", tpy.Name(), tpy.Elem().Kind(), tpy.Kind())}
 		}
 		if val.Len() == 0 {
 			return DataFrame{Err: fmt.Errorf("load: can't create DataFrame from empty slice")}
 		}
 
-		numFields := val.Index(0).Type().NumField()
+		structVal := val.Index(0)
+		if isPointer {
+			structVal = structVal.Elem()
+		}
+		numFields := structVal.Type().NumField()
 		var columns []series.Series
 		for j := 0; j < numFields; j++ {
 			// Extract field metadata
-			if !val.Index(0).Field(j).CanInterface() {
+			if !structVal.Field(j).CanInterface() {
 				continue
 			}
-			field := val.Index(0).Type().Field(j)
+			field := structVal.Type().Field(j)
 			fieldName := field.Name
 			fieldType := field.Type.String()
 
@@ -1241,8 +1248,11 @@ func LoadStructs(i interface{}, options ...LoadOption) DataFrame {
 			// Create Series for this field
 			elements := make([]interface{}, val.Len())
 			for i := 0; i < val.Len(); i++ {
-				fieldValue := val.Index(i).Field(j)
-				elements[i] = fieldValue.Interface()
+				fieldValue := val.Index(i)
+				if isPointer {
+					fieldValue = fieldValue.Elem()
+				}
+				elements[i] = fieldValue.Field(j).Interface()
 
 				// Handle `nanValues` option
 				if findInStringSlice(fmt.Sprint(elements[i]), cfg.nanValues) != -1 {
