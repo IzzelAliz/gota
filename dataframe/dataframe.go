@@ -389,9 +389,6 @@ const KEY_ERROR = "KEY_ERROR"
 
 // GroupBy Group dataframe by columns
 func (df DataFrame) GroupBy(colnames ...string) *Groups {
-	if len(colnames) <= 0 {
-		return nil
-	}
 	groupDataFrame := make(map[string]DataFrame)
 	groupSeries := make(map[string][]map[string]interface{})
 	// Check that colname exist on dataframe

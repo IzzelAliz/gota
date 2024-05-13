@@ -2977,6 +2977,18 @@ func TestDataFrame_GroupBy(t *testing.T) {
 	}
 }
 
+func TestDataFrame_EmptyGroupBy(t *testing.T) {
+	a := New(
+		series.New([]string{"b", "a", "b", "a", "b"}, series.String, "key1"),
+		series.New([]int{1, 2, 1, 2, 2}, series.Int, "key2"),
+		series.New([]float64{3.0, 4.0, 5.3, 3.2, 1.2}, series.Float, "values"),
+	)
+	agg := a.GroupBy().Agg([]string{"sum"}, NewAgg("values", series.Aggregation_Sum))
+	if !IsEqual(16.7, agg.Col("sum").Elem(0).Float()) {
+		t.Errorf("expect 16.7, actual %v", agg.Col("sum").Elem(0).Float())
+	}
+}
+
 func TestDataFrame_Aggregation(t *testing.T) {
 	a := New(
 		series.New([]string{"b", "a", "b", "a", "b"}, series.String, "key1"),
